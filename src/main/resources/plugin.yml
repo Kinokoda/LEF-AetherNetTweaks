@@ -1,0 +1,7 @@
+name: LEF-AetherNetTweaks
+version: '1.0-SNAPSHOT'
+main: eu.lowendforum.LEFAetherNetTweaks.LEFAetherNetTweaks
+api-version: '1.21'
+authors: [ Kinokoda ]
+description: A set of minor and major-ish additions for the LEF/Icarium server(s).
+website: www.lowendforum.eu
