@@ -135,10 +135,10 @@ public class TreeCutterActivationListener implements Listener {
         for (Block block : blocksToDestroy) {
             if (block.getType().toString().endsWith("_LOG")) {
                 if (misfired) {
-                    dispenserInventory.addItem(new ItemStack(bottomLog.getType(), 2));
+                    placeItem(dispenserInventory, new ItemStack(bottomLog.getType(), 2));
                     misfired = false;
                 }
-                dispenserInventory.addItem(new ItemStack(bottomLog.getType(), 1));
+                placeItem(dispenserInventory, new ItemStack(bottomLog.getType(), 1));
             }
         }
         for (Block block : blocksToDestroy) {
@@ -146,6 +146,12 @@ public class TreeCutterActivationListener implements Listener {
         }
     }
 
+    /**
+     * Since addItem() doesn't feel like functioning, I am writing this function to replace it for this specific application.
+     * @param dispenserInventory The inventory of the dispenser that items will be added to.
+     * @param itemToAdd The item to be added to the dispenser inventory.
+     * @return None.
+     */
     void placeItem(Inventory dispenserInventory, ItemStack itemToAdd) {
         for(var slot: dispenserInventory.getStorageContents()) {
             int slotIndex = 0;
