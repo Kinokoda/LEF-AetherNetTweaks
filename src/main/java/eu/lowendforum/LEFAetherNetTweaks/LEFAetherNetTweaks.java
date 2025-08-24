@@ -9,9 +9,12 @@ public final class LEFAetherNetTweaks extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        // Activate all the listeners
         getServer().getPluginManager().registerEvents(new HammerBlockDestructionListener(), this);
         getServer().getPluginManager().registerEvents(new TreeCutterActivationListener(), this);
+        getServer().getPluginManager().registerEvents(new JukeboxPASystemListener(), this);
+
+        //Add custom recipes
         ANT_IronHammer.makeRecipe(this);
         ANT_StoneHammer.makeRecipe(this);
         ANT_DiamondHammer.makeRecipe(this);

@@ -135,10 +135,10 @@ public class TreeCutterActivationListener implements Listener {
         for (Block block : blocksToDestroy) {
             if (block.getType().toString().endsWith("_LOG")) {
                 if (misfired) {
-                    placeItem(dispenserInventory, new ItemStack(bottomLog.getType(), 2));
+                    placeItem(dispenserInventory, new ItemStack(block.getType(), 2));
                     misfired = false;
                 }
-                placeItem(dispenserInventory, new ItemStack(bottomLog.getType(), 1));
+                placeItem(dispenserInventory, new ItemStack(block.getType(), 1));
             }
         }
         for (Block block : blocksToDestroy) {
