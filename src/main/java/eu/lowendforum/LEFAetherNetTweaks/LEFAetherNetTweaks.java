@@ -7,8 +7,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class LEFAetherNetTweaks extends JavaPlugin {
 
+
+
     @Override
     public void onEnable() {
+
         // Activate all the listeners
         getServer().getPluginManager().registerEvents(new HammerBlockDestructionListener(), this);
         getServer().getPluginManager().registerEvents(new TreeCutterActivationListener(), this);
@@ -18,6 +21,7 @@ public final class LEFAetherNetTweaks extends JavaPlugin {
         ANT_IronHammer.makeRecipe(this);
         ANT_StoneHammer.makeRecipe(this);
         ANT_DiamondHammer.makeRecipe(this);
+        ANT_SawBlade.makeRecipe(this);
         var netheriteHammerRecipe = ANT_NetheriteHammer.makeRecipe(this);
 
 

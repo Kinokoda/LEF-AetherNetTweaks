@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.util.RayTraceResult;
 
 import java.util.ArrayList;
@@ -92,6 +93,12 @@ public class HammerBlockDestructionListener implements Listener {
                 continue;
             }
             targetBlock.breakNaturally(userTool);
+
+            if(userToolMeta instanceof Damageable damageable){
+                damageable.setDamage(damageable.getDamage() + 1);
+                userTool.setItemMeta(damageable);
+            }
+
         }
 
     }

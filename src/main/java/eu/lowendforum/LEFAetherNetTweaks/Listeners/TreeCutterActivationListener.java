@@ -2,16 +2,20 @@ package eu.lowendforum.LEFAetherNetTweaks.Listeners;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
+import io.papermc.paper.event.block.BlockPreDispenseEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Dispenser;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,71 +24,31 @@ import java.util.List;
 public class TreeCutterActivationListener implements Listener {
 
     @EventHandler
-    public void onActivate(BlockDispenseEvent triggerEvent) {
-        var triggerBlock = triggerEvent.getBlock();
-        var dispenserData = triggerBlock.getBlockData();
-        var triggerBlockInventory = ((org.bukkit.block.Dispenser) triggerBlock.getState()).getInventory();
-        var triggerItem = triggerEvent.getItem();
-        boolean missfired = false;
-
-        ItemStack checkItem = new ItemStack(Material.DIAMOND_AXE, 1);
-        checkItem.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
-                .addString("tree_cutter")
-                .build()
-        );
-        var checkItemMeta = checkItem.getItemMeta();
-        checkItemMeta.displayName(Component.text("Saw Blade"));
-        checkItem.setItemMeta(checkItemMeta);
-
-        if(triggerBlockInventory.contains(checkItem)) {
-            triggerEvent.setCancelled(true);
-            System.out.println("[INFO]: Dispenser contains a Saw Blade but tried firing something else: " + triggerItem.getType());
-            triggerItem = checkItem;
-            System.out.println("[INFO] Replacing with: " + triggerItem);
+    public void onActivate(BlockPreDispenseEvent triggerEvent) {
+        Block triggerBlock = triggerEvent.getBlock();
+        Inventory triggerBlockInventory = ((Dispenser) triggerBlock.getState()).getInventory();
+        BlockData triggerBlockData = triggerBlock.getBlockData();
+        if (!hasSawBlade(triggerBlockInventory)) {
+            return;
         }
-        var triggerItemMetadata = triggerItem.getItemMeta();
-
+        triggerEvent.setCancelled(true);
         BlockFace triggerBlockFacing = null;
-        if(dispenserData instanceof org.bukkit.block.data.type.Dispenser){
-            triggerBlockFacing = ((org.bukkit.block.data.type.Dispenser) dispenserData).getFacing();
+        if (triggerBlockData instanceof Directional directional) {
+            triggerBlockFacing = directional.getFacing();
         }
-
-
-
-        //Exit if the item doesn't have the required metadata
-        if(!(triggerItemMetadata.getCustomModelDataComponent().getStrings().contains("tree_cutter") && triggerItem.getType().equals(Material.DIAMOND_AXE))) { return; }
-        else{
-            triggerEvent.setCancelled(true);
-            Block targetBlock = null;
-            System.out.println("[INFO]: TreeCutterActivationListener has been called. Dispenser Facing: " + triggerBlockFacing);
-            switch(triggerBlockFacing) {
-                case NORTH -> targetBlock = triggerBlock.getRelative(BlockFace.NORTH);
-                case SOUTH -> targetBlock = triggerBlock.getRelative(BlockFace.SOUTH);
-                case EAST -> targetBlock = triggerBlock.getRelative(BlockFace.EAST);
-                case WEST -> targetBlock = triggerBlock.getRelative(BlockFace.WEST);
-                default -> throw new IllegalStateException("Invalid block facing: " + triggerBlockFacing);
-            }
-            System.out.println("[INFO]: Target Block: " + targetBlock.getType() + " at " + targetBlock.getLocation().toString());
-            treeDestroy(missfired, triggerBlock, targetBlock);
+        System.out.println("Dispenser activated with saw blade: " + triggerBlock.getLocation().toString());
+        Block targetBlock = null;
+        switch (triggerBlockFacing) {
+            case NORTH -> targetBlock = triggerBlock.getRelative(BlockFace.NORTH);
+            case SOUTH -> targetBlock = triggerBlock.getRelative(BlockFace.SOUTH);
+            case EAST -> targetBlock = triggerBlock.getRelative(BlockFace.EAST);
+            case WEST -> targetBlock = triggerBlock.getRelative(BlockFace.WEST);
+            default -> throw new IllegalStateException("Invalid block facing: " + triggerBlockFacing);
         }
+        treeDestroy(triggerBlockInventory, targetBlock);
     }
 
-    public Material getLeafMaterial(Material inputMaterial){
-        return switch (inputMaterial) {
-            case OAK_LOG -> Material.OAK_LEAVES;
-            case SPRUCE_LOG -> Material.SPRUCE_LEAVES;
-            case BIRCH_LOG -> Material.BIRCH_LEAVES;
-            case JUNGLE_LOG -> Material.JUNGLE_LEAVES;
-            case ACACIA_LOG -> Material.ACACIA_LEAVES;
-            case DARK_OAK_LOG -> Material.DARK_OAK_LEAVES;
-            case CHERRY_LOG -> Material.CHERRY_LEAVES;
-            case PALE_OAK_LOG -> Material.PALE_OAK_LEAVES;
-            case MANGROVE_LOG -> Material.MANGROVE_LEAVES;
-            default -> throw new IllegalStateException("Unexpected value: " + inputMaterial);
-        };
-    }
-
-    public void treeDestroy(boolean misfired, Block dispenserBlock, Block bottomLog) {
+    public void treeDestroy(Inventory dispenserInventory, Block bottomLog) {
         List<Block> blocksToDestroy = new ArrayList<>();
         Material logMaterial = bottomLog.getType();
         Material leafMaterial = getLeafMaterial(logMaterial);
@@ -112,7 +76,7 @@ public class TreeCutterActivationListener implements Listener {
                 break; // Stop if we reach a non-log block
             }
         }
-        /*
+
         // Scan for leaves around each log block
         for (Block logBlock : new ArrayList<>(blocksToDestroy)) {
             Location logLocation = logBlock.getLocation();
@@ -127,18 +91,12 @@ public class TreeCutterActivationListener implements Listener {
                 }
             }
         }
-        */
+
         // Destroy all collected blocks and add logs to dispenser inventory
-        var dispenserState = (org.bukkit.block.Dispenser) dispenserBlock.getState();
-        var dispenserInventory = dispenserState.getInventory();
         //Collect the blocks
         for (Block block : blocksToDestroy) {
             if (block.getType().toString().endsWith("_LOG")) {
-                if (misfired) {
-                    placeItem(dispenserInventory, new ItemStack(block.getType(), 2));
-                    misfired = false;
-                }
-                placeItem(dispenserInventory, new ItemStack(block.getType(), 1));
+                dispenserInventory.addItem(new ItemStack(block.getType(), 1));
             }
         }
         for (Block block : blocksToDestroy) {
@@ -146,24 +104,30 @@ public class TreeCutterActivationListener implements Listener {
         }
     }
 
-    /**
-     * Since addItem() doesn't feel like functioning, I am writing this function to replace it for this specific application.
-     * @param dispenserInventory The inventory of the dispenser that items will be added to.
-     * @param itemToAdd The item to be added to the dispenser inventory.
-     * @return None.
-     */
-    void placeItem(Inventory dispenserInventory, ItemStack itemToAdd) {
-        for(var slot: dispenserInventory.getStorageContents()) {
-            int slotIndex = 0;
-            if(slot == null) {
-                dispenserInventory.setItem(slotIndex, itemToAdd);
-                return;
-            }
-            else if(slot.getType() == itemToAdd.getType() && slot.getAmount() < slot.getMaxStackSize()) {
-                slot.setAmount(slot.getAmount() + itemToAdd.getAmount());
-                return;
-            }
-        }
+    public boolean hasSawBlade(Inventory dispenserInventory){
+        ItemStack checkItem = new ItemStack(Material.DIAMOND_AXE, 1);
+        checkItem.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
+                .addString("sawblade")
+                .build()
+        );
+        ItemMeta checkItemMeta = checkItem.getItemMeta();
+        checkItemMeta.displayName(Component.text("Saw Blade"));
+        checkItem.setItemMeta(checkItemMeta);
+        return dispenserInventory.contains(checkItem);
+    }
 
+    public Material getLeafMaterial(Material inputMaterial){
+        return switch (inputMaterial) {
+            case OAK_LOG -> Material.OAK_LEAVES;
+            case SPRUCE_LOG -> Material.SPRUCE_LEAVES;
+            case BIRCH_LOG -> Material.BIRCH_LEAVES;
+            case JUNGLE_LOG -> Material.JUNGLE_LEAVES;
+            case ACACIA_LOG -> Material.ACACIA_LEAVES;
+            case DARK_OAK_LOG -> Material.DARK_OAK_LEAVES;
+            case CHERRY_LOG -> Material.CHERRY_LEAVES;
+            case PALE_OAK_LOG -> Material.PALE_OAK_LEAVES;
+            case MANGROVE_LOG -> Material.MANGROVE_LEAVES;
+            default -> throw new IllegalStateException("Unexpected value: " + inputMaterial);
+        };
     }
 }
