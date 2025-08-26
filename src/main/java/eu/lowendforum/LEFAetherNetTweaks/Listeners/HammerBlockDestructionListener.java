@@ -92,6 +92,7 @@ public class HammerBlockDestructionListener implements Listener {
             if ((getQualities().stream().anyMatch(qualityTag -> qualityTag.isTagged(targetBlock.getType())) && serviceableBlocks.stream().noneMatch(tag -> tag.isTagged(targetBlock.getType()))) || targetBlock.getType().getHardness() == -1) {
                 continue;
             }
+            if (targetBlock.getType() == Material.AIR) continue; //Skip air blocks
             targetBlock.breakNaturally(userTool);
 
             if(userToolMeta instanceof Damageable damageable){
@@ -99,6 +100,11 @@ public class HammerBlockDestructionListener implements Listener {
                 userTool.setItemMeta(damageable);
             }
 
+        }
+        if(userToolMeta instanceof Damageable damageable){
+            if (damageable.getDamage() >= userTool.getType().getMaxDurability()) {
+                triggerPlayer.getInventory().setItemInMainHand(null);
+            }
         }
 
     }

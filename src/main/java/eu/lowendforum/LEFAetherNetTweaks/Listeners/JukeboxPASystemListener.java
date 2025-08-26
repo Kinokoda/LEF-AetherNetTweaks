@@ -24,7 +24,7 @@ public class JukeboxPASystemListener implements Listener {
                 interactionType = JukeboxInteractionType.STARTING;
             }
 
-            System.out.println("Jukebox interaction detected: " + interactionType);
+            //System.out.println("Jukebox interaction detected: " + interactionType);
         }
     }
 }

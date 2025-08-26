@@ -36,7 +36,7 @@ public class TreeCutterActivationListener implements Listener {
         if (triggerBlockData instanceof Directional directional) {
             triggerBlockFacing = directional.getFacing();
         }
-        System.out.println("Dispenser activated with saw blade: " + triggerBlock.getLocation().toString());
+        //System.out.println("Dispenser activated with saw blade: " + triggerBlock.getLocation().toString());
         Block targetBlock = null;
         switch (triggerBlockFacing) {
             case NORTH -> targetBlock = triggerBlock.getRelative(BlockFace.NORTH);
